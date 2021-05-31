@@ -1,6 +1,5 @@
 import glob
 import sys
-import time
 
 import pandas as pd
 
@@ -11,6 +10,8 @@ path = r'D:\Projects\Licenta\Exome Analysis Project\saved exomes analysis'
 all_files = glob.glob(path + "/*.csv")
 
 # now = round(time.time() * 1000)
+
+print("Gene Frequency Pipeline started")
 
 for file_name in all_files:
     truncatedDataFrame = pd.read_csv(file_name, index_col=None, na_values=['NA'], usecols=["GeneName", "CHROM", "POS"])
