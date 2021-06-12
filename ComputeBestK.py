@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot
-from numpy import unique, where
+from sklearn.metrics import silhouette_score
 
 from KMeansImpl import KMeansImpl
 
@@ -16,7 +16,6 @@ genes = ['AIP', 'ALK', 'APC', 'ATM', 'AXIN2', 'BAP1', 'BARD1', 'BLM', 'BMPR1A', 
          'TERT', 'TMEM127', 'TP53', 'TSC1', 'TSC2', 'VHL', 'WRN', 'WT1']
 
 exAc = 'ExAC_ALL'
-
 
 file_name = r"\clusters" + str(1) + ".png"
 save_path = r"D:\Projects\Licenta\Exome Analysis Project\saved clustering plots" + file_name
@@ -33,60 +32,30 @@ def create_data(X):
             number_of_total_genes = current_csv.shape[0]
             filt = (current_csv['GeneName'].isin(genes))
             filtered_data_frame = current_csv.loc[filt, [exAc]]
-            print(get_name_of_file(file))
             ex_ac_all_mean = get_mean_for(filtered_data_frame, exAc)
             number_of_cancer_genes = filtered_data_frame.shape[0]
-            X.append([ex_ac_all_mean, number_of_cancer_genes/number_of_total_genes*100])
+            X.append([ex_ac_all_mean, number_of_cancer_genes / number_of_total_genes * 100])
         except BaseException:
             pass
     return X
-
-
-def get_file_names(file_names):
-    for file in all_files:
-        file_names.append(get_name_of_file(file))
-    return file_names
-
-
-def get_name_of_file(file):
-    start = file.rfind('\\')
-    name = file[start+1:]
-    end = name.find(".")
-    return name[:end]
 
 
 def get_mean_for(current_csv, exAc):
     filt = (current_csv[exAc] != ".")
     ex_ac = current_csv.loc[filt, [exAc]]
     ex_ac[exAc] = ex_ac[exAc].astype(float)
-    # print(ex_ac.shape[0], ex_ac[exAc].median())
-    return ex_ac[exAc].median()
-
-
-def write_to_log_file(cluster):
-    f = open('clustering_logs.txt', 'a')
-    f.write(cluster + "\n")
-    f.close()
+    return ex_ac[exAc].mean()
 
 
 X = np.array(create_data([]))
-file_names = np.array(get_file_names([]))
+silhouette = []
+for kw in range(2, 10):
+    model = KMeansImpl(k=kw)
+    model.fit(X)
+    labels = model.labels
+    silhouette.append(silhouette_score(X, labels, metric='euclidean'))
 
+print(silhouette)
 
-model = KMeansImpl(k=2)
-model.fit(X)
-yhat = model.predict(X)
-clusters = unique(yhat)
-for cluster in clusters:
-    row_ix = where(yhat == cluster)
-    write_to_log_file(str(cluster) + " : " + str(file_names[row_ix]))
-    pyplot.scatter(X[row_ix, 0], X[row_ix, 1])
-
-# pyplot.scatter(X[:, 0], X[:, 1])
-
-pyplot.xlabel("ExAc_All")
-pyplot.ylabel("Pathogenic variant percentage")
-pyplot.plot()
-pyplot.savefig(save_path)
-print("Clustering done")
-# pyplot.show()
+pyplot.plot([2, 3, 4, 5, 6, 7, 8, 9], silhouette)
+pyplot.show()
